@@ -26,41 +26,18 @@ export async function onRequestPost(context) {
       try {
         const aiRes = await env.AI.run(cfModel, {
           prompt: printEnforcedPrompt,
-          num_steps: 4,
         });
 
-        // Convert response buffer to base64
-        let arrayBuffer;
-        if (aiRes instanceof Response) {
-          arrayBuffer = await aiRes.arrayBuffer();
-        } else if (aiRes instanceof ArrayBuffer) {
-          arrayBuffer = aiRes;
-        } else if (aiRes?.image) {
+        if (aiRes?.image) {
           return new Response(JSON.stringify({
             success: true,
             imageUrl: `data:image/jpeg;base64,${aiRes.image}`,
-            engineUsed: "Cloudflare Pages Native Workers AI",
+            engineUsed: "Cloudflare Pages Native Workers AI (Flux-1 Schnell)",
             modelUsed: cfModel
-          }), { headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" } });
-        } else {
-          arrayBuffer = await new Response(aiRes).arrayBuffer();
+          }), {
+            headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" }
+          });
         }
-
-        const uint8Array = new Uint8Array(arrayBuffer);
-        let binaryString = "";
-        for (let i = 0; i < uint8Array.length; i++) {
-          binaryString += String.fromCharCode(uint8Array[i]);
-        }
-        const b64 = btoa(binaryString);
-
-        return new Response(JSON.stringify({
-          success: true,
-          imageUrl: `data:image/jpeg;base64,${b64}`,
-          engineUsed: "Cloudflare Pages Native Workers AI",
-          modelUsed: cfModel
-        }), {
-          headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" }
-        });
       } catch (nativeAiErr) {
         console.warn("Native Workers AI run error:", nativeAiErr);
       }
@@ -126,8 +103,7 @@ export async function onRequestPost(context) {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            prompt: printEnforcedPrompt,
-            num_steps: 4,
+            prompt: printEnforcedPrompt
           }),
         });
 
